@@ -4,8 +4,22 @@ class Stopwatch {
         this.reference = reference;
         this.running = false;
         this.timeModifier = 0;
+        let elements = [];
 
         //Create analog stopwatch elements
+        elements.push(this.createAnalog());
+
+        //Create digital stopwatch elements
+        elements.push(this.createDigital());
+
+        //Create buttons
+        elements.push(this.createButtons());
+
+        //Append everything to the root stopwatch element
+        this.appendElements(elements);
+    }
+
+    createAnalog() {
         let analog = document.createElement('div');
         analog.className = 'analog-cnt';
         let stopwatchImage = document.createElement('img');
@@ -14,34 +28,39 @@ class Stopwatch {
         hand.className = 'analog-hand seconds';
         analog.append(stopwatchImage);
         analog.append(hand);
+        return analog;
+    }
 
-        //Create digital stopwatch elements
+    createDigital() {
         let digital = document.createElement('div');
         digital.className = 'digital-cnt';
         let span = document.createElement('span');
         span.innerText = "00:00:00";
         digital.append(span);
+        return digital;
+    }
 
-        //Create buttons
+    createButtons() {
         let btnCnt = document.createElement('div');
         btnCnt.className = 'btn-cnt';
         btnCnt.append(this.createButton('Start', this.start, this));
         btnCnt.append(this.createButton('Stop', this.stop, this));
         btnCnt.append(this.createButton('Reset', this.reset, this));
-
-        //Append everything to the root stopwatch element
-        this.reference.append(analog);
-        this.reference.append(digital);
-        this.reference.append(btnCnt);
+        return btnCnt;
     }
 
-    //Function to avoid repeating same code
     createButton(text, onclick) {
         let btn = document.createElement('button');
         btn.innerText = text;
         btn.className = 'btn ' + text.toLowerCase();
         btn.onclick = () => { onclick.call(this) };
         return btn;
+    }
+
+    appendElements(elements) {
+        elements.forEach((e) => {
+            this.reference.append(e);
+        });
     }
 
     //Start stopwatch
@@ -80,26 +99,29 @@ class Stopwatch {
     */
     tickTock() {
         this.ticker = setInterval(() => {
-            let secondsHand = this.reference.querySelector('.analog-hand.seconds');
-            let digital = this.reference.querySelector('.digital-cnt span');
-
-            //Update analog clock
-            let currentTime = Date.now();
-            let elapsedTime = currentTime - this.startTime + this.timeModifier;
-            let rotation = (Math.floor(elapsedTime / 10)) * 0.06;
-            secondsHand.style.transform = 'rotateZ(' + rotation + 'deg)';
-
-            //Update digital clock
-            let currentSeconds = (Math.floor(elapsedTime / 1000) % 60);
-            let currentMinutes = Math.floor((elapsedTime % 3600000) / 60000);
-            if(this.reference.classList.contains('hours')) {
-                let currentHours = Math.floor(elapsedTime / 3600000);
-                digital.textContent = Stopwatch.addZero(currentHours) + ":" + Stopwatch.addZero(currentMinutes) + ":" + Stopwatch.addZero(currentSeconds);
-            } else {
-                let currentCentiseconds = Math.round(elapsedTime / 10) % 100;
-                digital.textContent = Stopwatch.addZero(currentMinutes) + ":" + Stopwatch.addZero(currentSeconds) + ":" + Stopwatch.addZero(currentCentiseconds);
-            }
+            let elapsedTime = Date.now() - this.startTime + this.timeModifier;
+            this.updateAnalogClock(elapsedTime);
+            this.updateDigitalClock(elapsedTime);
         }, 10)
+    }
+
+    updateAnalogClock(elapsedTime) {
+        let secondsHand = this.reference.querySelector('.analog-hand.seconds');
+        let rotation = (Math.floor(elapsedTime / 10)) * 0.06;
+        secondsHand.style.transform = 'rotateZ(' + rotation + 'deg)';
+    }
+
+    updateDigitalClock(elapsedTime) {
+        let digital = this.reference.querySelector('.digital-cnt span');
+        let currentSeconds = (Math.floor(elapsedTime / 1000) % 60);
+        let currentMinutes = Math.floor((elapsedTime % 3600000) / 60000);
+        if(this.reference.classList.contains('hours')) {
+            let currentHours = Math.floor(elapsedTime / 3600000);
+            digital.textContent = Stopwatch.addZero(currentHours) + ":" + Stopwatch.addZero(currentMinutes) + ":" + Stopwatch.addZero(currentSeconds);
+        } else {
+            let currentCentiseconds = Math.round(elapsedTime / 10) % 100;
+            digital.textContent = Stopwatch.addZero(currentMinutes) + ":" + Stopwatch.addZero(currentSeconds) + ":" + Stopwatch.addZero(currentCentiseconds);
+        }
     }
 
     static addZero(number) {
